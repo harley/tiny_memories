@@ -83,7 +83,7 @@ class CheerProcessor
 
   def text_on_video
     File.write(local_text_path, multiline_text) #unless File.exist?(local_text_path)
-    Text4Video.new(textfile: local_text_path, video_file: local_video_path, output: local_text_video_path, duration: 5)
+    Text4Video.new(textfile: local_text_path, video_file: local_video_path, output: local_text_video_path, duration: 2)
   end
 end
 
@@ -174,12 +174,12 @@ class VideoMerger
 end
 
 class Image2Video
-  def initialize(image_file:, duration: 5, output: nil)
+  def initialize(image_file:, duration: 2, output: nil)
     basename = Pathname.new(image_file).basename
-    output ||= "videos/#{basename}.mp4"
-
-    cmd = "ffmpeg -loop 1 -t #{duration} -i #{image_file} \
-    -c:v libx264 -pix_fmt yuv420p -shortest #{output}"
+    output ||= "videos/#{rand(100)}.mp4"
+    cmd = "
+      ffmpeg -framerate 1 -t #{duration} -i #{image_file} -vf scale=1280:-2 -c:v libx264 \ -r 30 -pix_fmt yuv420p #{output}
+    "
 
     system(cmd)
   end
@@ -187,21 +187,16 @@ end
 
 # Turn Gif to keep 10 seconds video
 class Gif2Video
-  def initialize(gif_file:, output: nil, duration: 5)
+  def initialize(gif_file:, output: nil, duration: 2)
     basename = Pathname.new(gif_file).basename
     output ||= "videos/#{basename}.mp4"
-    `ffmpeg -stream_loop -1 -i #{gif_file} -loop 4 \
-    -movflags faststart -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" \
-    -t #{duration} #{output}`
+    `ffmpeg -stream_loop -1 -i #{gif_file} -vf scale=1280:-2 -loop 4 \ -movflags faststart -pix_fmt yuv420p  \-t #{duration} #{output}`
   end
 end
 
 class Text4Video
-  def initialize(textfile:, video_file:, output: 'out.mp4', duration: 5)
-    cmd = %{ffmpeg -i #{video_file} -vf \
-      drawtext="fontfile=fonts/Chalkboard.ttf: \
-      textfile='#{textfile}': fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: \
-      boxborderw=2: x=(w-text_w)/2: y=(h-text_h)/2" -t #{duration} #{output}}
+  def initialize(textfile:, video_file:, output: 'out.mp4', duration: 2)
+    cmd = %{ffmpeg -i #{video_file} -vf \ drawtext="fontfile=fonts/Chalkboard.ttf: \ textfile='#{textfile}': fontcolor=white: fontsize=24: box=1: boxcolor=black@0.5: \ boxborderw=2: x=(w-text_w)/2: y=(h-text_h)/2" -t #{duration} #{output}}
 
     system(cmd)
   end
